@@ -1,12 +1,18 @@
 package proxyserver.socket;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URL;
+import java.util.Base64;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -182,7 +188,7 @@ public class ProxyConnection implements Runnable {
 			// ---> read from client <---
 
 			dlen = readClientData();
-
+			translateToHttp("Read from Client");
 			if (dlen < 0)
 				isActive = false;
 			if (dlen > 0) {
@@ -192,7 +198,7 @@ public class ProxyConnection implements Runnable {
 
 			// ---> read from Server <---
 			dlen = readServerData();
-
+			translateToHttp("Read from Server");
 			if (dlen < 0)
 				isActive = false;
 			if (dlen > 0) {
@@ -203,6 +209,20 @@ public class ProxyConnection implements Runnable {
 			Thread.currentThread();
 			Thread.yield();
 		} // while
+	}
+	
+	public void translateToHttp(String s) {
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(m_Buffer.clone())));
+			
+//			String line;
+//			while((line=in.readLine())!=null)System.out.println("LINE: "+line);
+			
+			Header header = Header.read(in);
+			if(!header.isEmpty())System.out.println(s+": "+header);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public int readClientData() {
