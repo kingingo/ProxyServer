@@ -1,5 +1,7 @@
 package proxyserver.socket;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -204,7 +206,7 @@ public class ProxyConnection implements Runnable {
 			Thread.yield();
 		} // while
 	}
-
+	
 	public int readClientData() {
 		synchronized (m_lock) {
 			// The client side is not opened.
