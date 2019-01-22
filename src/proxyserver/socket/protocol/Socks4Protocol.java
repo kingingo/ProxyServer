@@ -7,7 +7,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import lombok.Getter;
-import lombok.Setter;
 import proxyserver.socket.Constants;
 import proxyserver.socket.ProxyConnection;
 import proxyserver.socket.Utils;
@@ -54,7 +53,6 @@ public class Socks4Protocol {
 		} catch (Exception e) {
 			b = 0x00;
 		}
-		System.out.println("READ: " + b);
 		return b;
 	}
 

@@ -1,8 +1,5 @@
 package proxyserver.http.client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import proxyserver.http.Header;
 
 public class ClientHeader extends Header{

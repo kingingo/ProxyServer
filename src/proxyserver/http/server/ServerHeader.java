@@ -1,7 +1,5 @@
 package proxyserver.http.server;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.Date;
 
 import proxyserver.http.Header;

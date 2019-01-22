@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import proxyserver.http.client.ClientHeader;
-import proxyserver.http.client.ClientRequest;
 import proxyserver.http.server.ServerHeader;
 
 /**

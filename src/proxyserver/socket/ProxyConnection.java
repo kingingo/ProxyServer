@@ -1,11 +1,8 @@
 package proxyserver.socket;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 //github.com/kingingo/ProxyServer.git
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -14,6 +11,7 @@ import java.net.SocketException;
 
 import lombok.Getter;
 import lombok.Setter;
+import proxyserver.http.HttpHandler;
 import proxyserver.socket.protocol.Socks4Protocol;
 import proxyserver.socket.protocol.Socks5Protocol;
 
@@ -36,6 +34,7 @@ public class ProxyConnection implements Runnable {
 
 	private Thread thread;
 	private Socks4Protocol protocol;
+	private HttpHandler httpHandler;
 
 	public ProxyConnection(Socket client) {
 		this.client = client;
@@ -46,6 +45,7 @@ public class ProxyConnection implements Runnable {
 				print("Socket Exception during seting Timeout.");
 			}
 		}
+		this.httpHandler = HttpHandler.get(client.getInetAddress());
 		this.m_Buffer = new byte[Constants.DEFAULT_BUF_SIZE];
 		this.thread = new Thread(this);
 		this.thread.start();
@@ -186,41 +186,27 @@ public class ProxyConnection implements Runnable {
 			// ---> read from client <---
 
 			dlen = readClientData();
-			translateToHttp("Read from Client");
 			if (dlen < 0)
 				isActive = false;
 			if (dlen > 0) {
 				logClientData(dlen);
+//				this.httpHandler.writeToClient(m_Buffer.clone(),0,dlen);
 				sendToServer(m_Buffer, dlen);
 			}
 
 			// ---> read from Server <---
 			dlen = readServerData();
-			translateToHttp("Read from Server");
 			if (dlen < 0)
 				isActive = false;
 			if (dlen > 0) {
 				logServerData(dlen);
+//				this.httpHandler.writeToServer(m_Buffer.clone(),0,dlen);
 				sendToClient(m_Buffer, dlen);
 			}
 
 			Thread.currentThread();
 			Thread.yield();
 		} // while
-	}
-	
-	public void translateToHttp(String s) {
-		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(m_Buffer.clone())));
-			
-//			String line;
-//			while((line=in.readLine())!=null)System.out.println("LINE: "+line);
-			
-			Header header = Header.read(in);
-			if(!header.isEmpty())System.out.println(s+": "+header);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public int readClientData() {
@@ -292,15 +278,15 @@ public class ProxyConnection implements Runnable {
 	}
 
 	public void logServerData(int traffic) {
-		print("Srv data : " + Utils.getSocketInfo(this.server) + " << <" + this.protocol.getServerAdress().getHostName()
-				+ "/" + this.protocol.getServerAdress().getHostAddress() + ":" + this.protocol.getServerPort() + "> : " + traffic
-				+ " bytes.");
+//		print("Srv data : " + Utils.getSocketInfo(this.server) + " << <" + this.protocol.getServerAdress().getHostName()
+//				+ "/" + this.protocol.getServerAdress().getHostAddress() + ":" + this.protocol.getServerPort() + "> : " + traffic
+//				+ " bytes.");
 	}
 
 	public void logClientData(int traffic) {
-		print("Cli data : " + Utils.getSocketInfo(this.client) + " >> <" + this.protocol.getServerAdress().getHostName()
-				+ "/" + this.protocol.getServerAdress().getHostAddress() + ":" + this.protocol.getServerPort() + "> : " + traffic
-				+ " bytes.");
+//		print("Cli data : " + Utils.getSocketInfo(this.client) + " >> <" + this.protocol.getServerAdress().getHostName()
+//				+ "/" + this.protocol.getServerAdress().getHostAddress() + ":" + this.protocol.getServerPort() + "> : " + traffic
+//				+ " bytes.");
 	}
 
 	public void print(String msg) {
