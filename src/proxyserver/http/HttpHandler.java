@@ -1,30 +1,28 @@
 package proxyserver.http;
 
-import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.concurrent.Semaphore;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
-public class HttpHandler extends Thread{
-	private static HashMap<String,HttpHandler> http_handlers = new HashMap<>();
-	
-	public static HttpHandler get(InetAddress adress) {
-		if(!http_handlers.containsKey(adress.getHostAddress())) {
-			System.out.println("IP:"+adress.getHostName());
-			http_handlers.put(adress.getHostAddress(), new HttpHandler());
-		}
-		return http_handlers.get(adress.getHostAddress());
-	}
+public class HttpHandler extends Thread {
+	private static int counter = 0;
 	
 	private OutInInputRedirect client;
 	private OutInInputRedirect server;
-	
-	private HttpHandler() {
+	private int ID;
+	private boolean running = false;
+
+	public HttpHandler() {
+		this.ID = counter++;
 		prepareStream();
 		super.start();
 	}
-	
+
 	public void prepareStream() {
 		try {
 			this.client = new OutInInputRedirect();
@@ -34,35 +32,61 @@ public class HttpHandler extends Thread{
 		}
 	}
 	
+	public void close() {
+		this.running=false;
+	}
+
 	public void run() {
 		try {
-			int d;
-			while( (d=this.client.reader.read())!=-1) {
-				System.out.println("D:"+d);
+			this.running=true;
+			Header header;
+			int content_length;
+			
+			while(this.running) {
+				//Client read
+				header = Header.read(this.client.reader, Type.CLIENT);
+				System.out.println("["+this.ID+"]: Client-Header: \n"+header);
+				
+				content_length = header.getInt("Content-Length");
+				if(content_length!=-1)this.client.reader.skip(content_length);
+				//---
+				
+				//Server read
+				header = Header.read(this.server.reader, Type.SERVER);
+				System.out.println("["+this.ID+"]: Server-Header: \n"+header);
+				
+				content_length = header.getInt("Content-Length");
+				if(content_length!=-1)this.server.reader.skip(content_length);
+				//---
+
+				Thread.currentThread();
+				Thread.yield();
 			}
-			System.out.println("END READING");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		}finally {
+			close();
+			this.client.close();
+			this.server.close();
+		}
+
+	}
+
+	public void writeTo(OutputStream os, byte[] bytes, int offset, int length) {
+		try {
+			for (int i = 0; i < length; i++) {
+				os.write(bytes[i]+offset);
+			}
+			os.flush();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
-	public void writeToServer(byte[] bytes,int start, int length) {
-		try {
-			this.server.os.write(bytes,start,length);
-			this.server.os.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void writeToServer(byte[] bytes, int offset, int length) {
+		writeTo(this.server.os, bytes,offset,length);
 	}
-	
-	public void writeToClient(byte[] bytes,int start, int length) {
-		try {
-			this.client.os.write(bytes,start,length);
-			this.client.os.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+
+	public void writeToClient(byte[] bytes, int offset, int length) {
+		writeTo(this.client.os, bytes,offset,length);
 	}
 }

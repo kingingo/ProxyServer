@@ -27,4 +27,19 @@ class OutInInputRedirect {
         this.os = os;
         this.reader = new BufferedReader(new InputStreamReader(is));
     }
+    
+    public void close() {
+    	try {
+			is.close();
+		} catch (IOException e) {
+		}
+    	try {
+			os.close();
+		} catch (IOException e) {
+		}
+    	try {
+			reader.close();
+		} catch (IOException e) {
+		}
+    }
 }

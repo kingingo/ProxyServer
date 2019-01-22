@@ -45,7 +45,7 @@ public class ProxyConnection implements Runnable {
 				print("Socket Exception during seting Timeout.");
 			}
 		}
-		this.httpHandler = HttpHandler.get(client.getInetAddress());
+		this.httpHandler = new HttpHandler();
 		this.m_Buffer = new byte[Constants.DEFAULT_BUF_SIZE];
 		this.thread = new Thread(this);
 		this.thread.start();
@@ -98,7 +98,6 @@ public class ProxyConnection implements Runnable {
 			}
 		} catch (IOException e) {
 		}
-
 		try {
 			if (this.client != null) {
 				this.client.close();
@@ -113,6 +112,7 @@ public class ProxyConnection implements Runnable {
 		} catch (IOException e) {
 		}
 
+		this.httpHandler.close();
 		this.server = null;
 		this.client = null;
 
@@ -190,8 +190,8 @@ public class ProxyConnection implements Runnable {
 				isActive = false;
 			if (dlen > 0) {
 				logClientData(dlen);
-//				this.httpHandler.writeToClient(m_Buffer.clone(),0,dlen);
 				sendToServer(m_Buffer, dlen);
+				this.httpHandler.writeToClient(m_Buffer,0,dlen);
 			}
 
 			// ---> read from Server <---
@@ -200,8 +200,8 @@ public class ProxyConnection implements Runnable {
 				isActive = false;
 			if (dlen > 0) {
 				logServerData(dlen);
-//				this.httpHandler.writeToServer(m_Buffer.clone(),0,dlen);
 				sendToClient(m_Buffer, dlen);
+				this.httpHandler.writeToServer(m_Buffer,0,dlen);
 			}
 
 			Thread.currentThread();

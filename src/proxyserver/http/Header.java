@@ -21,6 +21,8 @@ public abstract class Header {
 		}
 	}
 	
+	
+	
 	/**
 	 * Liest den InputStream (in) aus und fügt die Informationen in einen Header
 	 */
@@ -30,7 +32,18 @@ public abstract class Header {
 
 		// Liest die einzelnen Zeilen des Headers aus und fügt sie hinzu
 		String line;
+		boolean found = false;
 		while ((line = in.readLine()) != null && !line.isEmpty()) {
+//			System.out.println("LINE: "+line);
+			if(!found) {
+				if(type==Type.SERVER)
+					line = ((ServerHeader)header).containsHeadline(line);
+				else 
+					line = ((ClientHeader)header).containsHeadline(line);
+				if(line.isEmpty())continue;
+				
+				found=true;
+			}
 			header.add(line);
 		}
 
@@ -61,6 +74,12 @@ public abstract class Header {
 	// Um auf Inhalte vom Header zu zugreifen, über den KEY
 	public String get(String name) {
 		return this.header.get(name);
+	}
+	
+	public int getInt(String name) {
+		String value = get(name);
+		if(value!=null)return Integer.valueOf(value);
+		return -1;
 	}
 
 	/**

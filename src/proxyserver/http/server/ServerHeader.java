@@ -16,6 +16,15 @@ public class ServerHeader extends Header{
 	public ServerHeader(String... s) {
 		super(s);
 	}
+	
+	public String containsHeadline(String line) {
+		int index = line.indexOf("HTTP/");
+		
+		if(index!=-1) {
+			return line.substring(index,line.length());
+		}
+		return "";
+	}
 
 	/**
 	 * Faegt die Kopfzeile mit einen StatusCode hinzu mit der HTTP Version 1.0

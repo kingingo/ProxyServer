@@ -3,7 +3,7 @@ package proxyserver.http.client;
 import proxyserver.http.Header;
 
 public class ClientHeader extends Header{
-
+	
 	public ClientHeader(String... s) {
 		super(s);
 	}
@@ -20,5 +20,23 @@ public class ClientHeader extends Header{
 		
 		super.addHeadline(builder.toString());
 		return this;
+	}
+
+	public String containsHeadline(String line) {
+		if(line.contains("HTTP/")) {
+			String type = "";
+			if(line.contains("POST")) type="POST";
+			else if(line.contains("GET")) type="GET";
+			else if(line.contains("HEAD")) type="HEAD";
+			
+			if(!type.isEmpty()) {
+				int index = line.indexOf(type);
+				
+				if(index!=-1) {
+					return line.substring(index, line.length());
+				}
+			}
+		}
+		return "";
 	}
 }
