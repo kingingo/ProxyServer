@@ -5,28 +5,50 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 
-import proxyserver.http.client.ClientHeader;
-import proxyserver.http.server.ServerHeader;
+import proxyserver.http.client.RequestMethod;
 
 /**
  * Sammelt alle Informationen zum Request/Response Header
  */
-public abstract class Header {
+public class Header {
 	// Erstellt einen leeren Header ohne irgendeinen Inhalt
 	public static Header createEmpty(Type type) {
-		switch(type) {
-		case CLIENT: return new ClientHeader();
-		case SERVER: return new ServerHeader();
-		default: throw new NullPointerException("type doesn't suit to this method!");
-		}
+		return new Header(type);
 	}
-	
-	
-	
+
+	private static String containsHeadline(Type type, String line) {
+		if (Type.SERVER == type) {
+			int index = line.indexOf("HTTP/");
+
+			if (index != -1) {
+				return line.substring(index, line.length());
+			}
+		} else {
+			if (line.contains("HTTP/")) {
+				String method = "";
+				if (line.contains("POST"))
+					method = "POST";
+				else if (line.contains("GET"))
+					method = "GET";
+				else if (line.contains("HEAD"))
+					method = "HEAD";
+
+				if (!method.isEmpty()) {
+					int index = line.indexOf(method);
+
+					if (index != -1) {
+						return line.substring(index, line.length());
+					}
+				}
+			}
+		}
+		return "";
+	}
+
 	/**
 	 * Liest den InputStream (in) aus und fügt die Informationen in einen Header
 	 */
-	public static Header read(BufferedReader in,Type type) throws IOException {
+	public static Header read(BufferedReader in, Type type) throws IOException {
 		// Erstellen eines leeren Headers
 		Header header = createEmpty(type);
 
@@ -34,22 +56,19 @@ public abstract class Header {
 		String line;
 		boolean found = false;
 		while ((line = in.readLine()) != null && !line.isEmpty()) {
-//			System.out.println("LINE: "+line);
-			if(!found) {
-				if(type==Type.SERVER)
-					line = ((ServerHeader)header).containsHeadline(line);
-				else 
-					line = ((ClientHeader)header).containsHeadline(line);
-				if(line.isEmpty())continue;
-				
-				found=true;
+			if (!found) {
+				line = containsHeadline(type, line);
+				if (line.isEmpty())
+					continue;
+
+				found = true;
 			}
 			header.add(line);
 		}
 
 		return header;
 	}
-	
+
 	/**
 	 * (key,value) => key: value (z.b Server: Java-Webserver, key=Server &
 	 * value=Java-Webserver)
@@ -58,6 +77,7 @@ public abstract class Header {
 	// head beinhaltet den Kopf des Headers also z.b (REQUEST) head = GET / HTTP/1.1
 	// oder (RESPONSE) head = HTTP/1.0 200 OK
 	private String head = "";
+	private Type type;
 
 	/**
 	 * Der Konstruktor ist private weil ein Header Object nur Ueber die static
@@ -66,20 +86,41 @@ public abstract class Header {
 	 * strings beinhaltet einige Optionen die zum Header direkt hinzugefügt werden
 	 * sollen
 	 */
-	protected Header(String... strings) {
+	protected Header(Type type, String... strings) {
+		this.type=type;
 		for (String s : strings)
 			add(s);
+	}
+
+	/**
+	 * Faegt die Kopfzeile mit einen StatusCode hinzu mit der HTTP Version 1.0
+	 */
+	public Header addHeadline(StatusCode code) {
+		addHeadline("HTTP/1.0 " + code.getMessage());
+		return this;
 	}
 
 	// Um auf Inhalte vom Header zu zugreifen, über den KEY
 	public String get(String name) {
 		return this.header.get(name);
 	}
-	
+
 	public int getInt(String name) {
 		String value = get(name);
-		if(value!=null)return Integer.valueOf(value);
+		if (value != null)
+			return Integer.valueOf(value);
 		return -1;
+	}
+
+	public Header addHeadline(RequestMethod request, String URL) {
+		StringBuilder builder = new StringBuilder();
+
+		builder.append(request.name()).append(" ");
+		builder.append(URL).append(" ");
+		builder.append("HTTP/1.0");
+
+		addHeadline(builder.toString());
+		return this;
 	}
 
 	/**
@@ -101,7 +142,7 @@ public abstract class Header {
 			this.head = line;
 			return this;
 		}
-		
+
 		// Gibt den Index an wo sich der Charakter ':' im String line befindet
 		int index = line.indexOf(':');
 		// Falls der index = -1 ist dann stimmt das Format (key:value) nicht und es wird
@@ -165,7 +206,7 @@ public abstract class Header {
 	 * Faegt die Kopfzeile mit einen StatusCode hinzu mit der HTTP Version 1.0
 	 */
 	protected Header addHeadline(String head) {
-		this.head=head;
+		this.head = head;
 		return this;
 	}
 
