@@ -77,10 +77,18 @@ public class HttpHandler extends Thread {
 	}
 	
 	public void writeToServer(byte[] bytes, int offset, int length) {
-		writeTo(this.server.os, bytes,offset,length);
+		try {
+			writeTo(this.server.os, CertificateHandler.getInstance().dencrypt(bytes, "www.google.com"),offset,length);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void writeToClient(byte[] bytes, int offset, int length) {
-		writeTo(this.client.os, bytes,offset,length);
+		try {
+			writeTo(this.client.os, CertificateHandler.getInstance().dencrypt(bytes, "www.google.com"),offset,length);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

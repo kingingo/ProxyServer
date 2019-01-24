@@ -5,6 +5,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import proxyserver.http.CertificateHandler;
+
 public class ProxyServer implements Runnable{
 
 	public static void main(String[] args) {
@@ -34,6 +36,7 @@ public class ProxyServer implements Runnable{
 	@Override
 	public void run() {
 		print("starts...");
+		CertificateHandler.getInstance();
 		while(!this.server.isClosed()) {
 			try {
 				Socket client = this.server.accept();
